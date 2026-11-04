@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tabla de Descenso - Inferiores Damas 2026</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        h1, h2 { text-align: center; color: #2c3e50; }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 20px;
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #2c3e50;
+            color: white;
+            position: sticky;
+            top: 0;
+        }
+        
+        .posiciones-table th { background-color: #34495e; }
+        
+        /* REGLAS ESTRICTAS PARA EL COLOR ROJO (DESCENSO) */
+        tr.descenso td {
+            background-color: #ffcccc !important;
+            color: #cc0000 !important;
+            font-weight: bold;
+        }
+        tr.seguro td {
+            background-color: #e8f8f5 !important;
+            color: #333 !important;
+        }
+        
+        .partido-grilla {
+            display: grid;
+            grid-template-columns: 60px 1fr 130px 1fr;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        .partido-grilla:last-child { border-bottom: none; }
+        .partido-grilla.cadetes { border-left: 4px solid #3498db; }
+        .partido-grilla.juveniles { border-left: 4px solid #9b59b6; }
+        .partido-grilla.juniors { border-left: 4px solid #e67e22; }
+        
+        .fecha-tag {
+            font-size: 0.8em;
+            background: #ecf0f1;
+            padding: 2px 5px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .equipo-local { text-align: right; font-weight: 500; font-size: 0.9em; }
+        .equipo-visitante { text-align: left; font-weight: 500; font-size: 0.9em; }
+        
+        .botones-resultado {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+        }
+        .btn-res {
+            padding: 5px 8px;
+            border: 1px solid #bdc3c7;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9em;
+            transition: all 0.2s;
+        }
+        .btn-res:hover { background: #ecf0f1; }
+        .btn-res.active-gana { background: #2ecc71; color: white; border-color: #27ae60; }
+        .btn-res.active-empata { background: #f1c40f; color: white; border-color: #f39c12; }
+        .btn-res.active-pierde { background: #e74c3c; color: white; border-color: #c0392b; }
+        
+        .categoria-title {
+            grid-column: 1 / -1;
+            background: #f8f9fa;
+            padding: 5px 10px;
+            font-weight: bold;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+
+        /* Botón para borrar todo */
+        .btn-borrar {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 20px;
+            display: block;
+            width: 100%;
+        }
+        .btn-borrar:hover { background-color: #c0392b; }
+
+        /* Adaptación para celulares */
+        @media (max-width: 600px) {
+            .partido-grilla {
+                grid-template-columns: 1fr;
+                text-align: center;
+                gap: 5px;
+                background: #fafafa;
+                border-radius: 5px;
+                margin-bottom: 5px;
+                border: 1px solid #eee;
+            }
+            .equipo-local, .equipo-visitante { text-align: center; }
+            .botones-resultado { margin: 5px 0; }
+            table { font-size: 0.8em; }
+            th, td { padding: 5px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Tabla de Descenso - Inferiores Damas 2026</h1>
+    
+    <!-- TABLA DE POSICIONES -->
+    <div class="card">
+        <h2>Posiciones en Tiempo Real</h2>
+        <p style="text-align: center; font-size: 0.9em; color: #666;">Los 3 equipos en rojo descienden.</p>
+        <table class="posiciones-table">
+            <thead>
+                <tr>
+                    <th>Pos</th>
+                    <th>Equipo</th>
+                    <th>Pts Base</th>
+                    <th>Pts Fijos (+24)</th>
+                    <th>Pts Grilla</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-posiciones">
+                <!-- Se llena con JS -->
+            </tbody>
+        </table>
+        
+        <!-- Botón para reiniciar todo -->
+        <button class="btn-borrar" onclick="borrarTodo()">Borrar todos los resultados y reiniciar</button>
+    </div>
+
+    <!-- GRILLA DE PARTIDOS -->
+    <div class="card">
+        <h2>Partidos Pendientes</h2>
+        <p style="text-align: center; font-size: 0.9em; color: #666; margin-bottom: 20px;">
+            Asigná el resultado. <br>
+            <strong>G:</strong> 3 pts / <strong>E:</strong> 2 pts / <strong>P:</strong> 1 pt.<br>
+            <em>(Hacé clic de nuevo en un botón para desmarcarlo)</em>
+        </p>
+        <div id="grilla-partidos">
+            <!-- Se llena con JS -->
+        </div>
+    </div>
+</div>
+
+<script>
+    // Datos iniciales
+    const equipos = {
+        'Ballester': { base: 356, ganados: 0 },
+        'UBA': { base: 354, ganados: 0 },
+        'Estudiantes': { base: 354, ganados: 0 },
+        'River': { base: 352, ganados: 0 },
+        'Juventud Unida': { base: 351, ganados: 0 },
+        'Lanús': { base: 342, ganados: 0 }
+    };
+
+    const PUNTOS_FIJOS = 24; // 6 Mini + 9 Inf + 9 Men
+
+    const partidos = [
+        { id: 'f11_cad_riv_luj', fecha: 'F11', cat: 'Cadetes', local: 'River', visitante: 'Ntra. Sra. de Luján' },
+        { id: 'f11_cad_ju_quil', fecha: 'F11', cat: 'Cadetes', local: 'Juventud Unida', visitante: 'A.A.C.F. Quilmes' },
+        { id: 'f11_cad_est_uba', fecha: 'F11', cat: 'Cadetes', local: 'Estudiantes', visitante: 'UBA' },
+
+        { id: 'f12_juv_vel_ju', fecha: 'F12', cat: 'Juveniles', local: 'Vélez', visitante: 'Juventud Unida' },
+
+        { id: 'f13_cad_riv_vel', fecha: 'F13', cat: 'Cadetes', local: 'River', visitante: 'Vélez' },
+        { id: 'f13_cad_ju_san', fecha: 'F13', cat: 'Cadetes', local: 'Juventud Unida', visitante: 'Municipalidad San Miguel' },
+        { id: 'f13_cad_lan_fer', fecha: 'F13', cat: 'Cadetes', local: 'Lanús', visitante: 'Ferro' },
+        { id: 'f13_cad_uba_com', fecha: 'F13', cat: 'Cadetes', local: 'UBA', visitante: 'Comunicaciones' },
+        { id: 'f13_cad_bal_arg', fecha: 'F13', cat: 'Cadetes', local: 'Ballester', visitante: 'Argentinos Juniors' },
+        { id: 'f13_cad_est_dor', fecha: 'F13', cat: 'Cadetes', local: 'Estudiantes', visitante: 'Dorrego' },
+        
+        { id: 'f13_juv_riv_vel', fecha: 'F13', cat: 'Juveniles', local: 'River', visitante: 'Vélez' },
+        { id: 'f13_juv_ju_san', fecha: 'F13', cat: 'Juveniles', local: 'Juventud Unida', visitante: 'Municipalidad San Miguel' },
+        { id: 'f13_juv_lan_fer', fecha: 'F13', cat: 'Juveniles', local: 'Lanús', visitante: 'Ferro' },
+        { id: 'f13_juv_uba_com', fecha: 'F13', cat: 'Juveniles', local: 'UBA', visitante: 'Comunicaciones' },
+        { id: 'f13_juv_bal_arg', fecha: 'F13', cat: 'Juveniles', local: 'Ballester', visitante: 'Argentinos Juniors' },
+        { id: 'f13_juv_est_dor', fecha: 'F13', cat: 'Juveniles', local: 'Estudiantes', visitante: 'Dorrego' },
+
+        { id: 'f13_jun_riv_vel', fecha: 'F13', cat: 'Juniors', local: 'River', visitante: 'Vélez' },
+        { id: 'f13_jun_ju_san', fecha: 'F13', cat: 'Juniors', local: 'Juventud Unida', visitante: 'Municipalidad San Miguel' },
+        { id: 'f13_jun_lan_fer', fecha: 'F13', cat: 'Juniors', local: 'Lanús', visitante: 'Ferro' },
+        { id: 'f13_jun_uba_com', fecha: 'F13', cat: 'Juniors', local: 'UBA', visitante: 'Comunicaciones' },
+        { id: 'f13_jun_bal_arg', fecha: 'F13', cat: 'Juniors', local: 'Ballester', visitante: 'Argentinos Juniors' },
+        { id: 'f13_jun_est_dor', fecha: 'F13', cat: 'Juniors', local: 'Estudiantes', visitante: 'Dorrego' },
+
+        { id: 'f14_cad_est_sed', fecha: 'F14', cat: 'Cadetes', local: 'Estudiantes', visitante: 'S.E.D.A.L.O.' },
+        { id: 'f14_cad_bal_dor', fecha: 'F14', cat: 'Cadetes', local: 'Ballester', visitante: 'Dorrego' },
+        { id: 'f14_cad_uba_lan', fecha: 'F14', cat: 'Cadetes', local: 'UBA', visitante: 'Lanús' },
+        { id: 'f14_cad_ju_fer', fecha: 'F14', cat: 'Cadetes', local: 'Juventud Unida', visitante: 'Ferro' },
+        { id: 'f14_cad_riv_san', fecha: 'F14', cat: 'Cadetes', local: 'River', visitante: 'Municipalidad San Miguel' },
+
+        { id: 'f14_juv_est_sed', fecha: 'F14', cat: 'Juveniles', local: 'Estudiantes', visitante: 'S.E.D.A.L.O.' },
+        { id: 'f14_juv_bal_dor', fecha: 'F14', cat: 'Juveniles', local: 'Ballester', visitante: 'Dorrego' },
+        { id: 'f14_juv_uba_lan', fecha: 'F14', cat: 'Juveniles', local: 'UBA', visitante: 'Lanús' },
+        { id: 'f14_juv_ju_fer', fecha: 'F14', cat: 'Juveniles', local: 'Juventud Unida', visitante: 'Ferro' },
+        { id: 'f14_juv_riv_san', fecha: 'F14', cat: 'Juveniles', local: 'River', visitante: 'Municipalidad San Miguel' },
+
+        { id: 'f14_jun_est_sed', fecha: 'F14', cat: 'Juniors', local: 'Estudiantes', visitante: 'S.E.D.A.L.O.' },
+        { id: 'f14_jun_bal_dor', fecha: 'F14', cat: 'Juniors', local: 'Ballester', visitante: 'Dorrego' },
+        { id: 'f14_jun_uba_lan', fecha: 'F14', cat: 'Juniors', local: 'UBA', visitante: 'Lanús' },
+        { id: 'f14_jun_ju_fer', fecha: 'F14', cat: 'Juniors', local: 'Juventud Unida', visitante: 'Ferro' },
+        { id: 'f14_jun_riv_san', fecha: 'F14', cat: 'Juniors', local: 'River', visitante: 'Municipalidad San Miguel' },
+
+        { id: 'f15_cad_riv_fer', fecha: 'F15', cat: 'Cadetes', local: 'River', visitante: 'Ferro' },
+        { id: 'f15_cad_ju_uba', fecha: 'F15', cat: 'Cadetes', local: 'Juventud Unida', visitante: 'UBA' },
+        { id: 'f15_cad_lan_arg', fecha: 'F15', cat: 'Cadetes', local: 'Lanús', visitante: 'Argentinos Juniors' },
+        { id: 'f15_cad_bal_est', fecha: 'F15', cat: 'Cadetes', local: 'Ballester', visitante: 'Estudiantes' },
+
+        { id: 'f15_juv_riv_fer', fecha: 'F15', cat: 'Juveniles', local: 'River', visitante: 'Ferro' },
+        { id: 'f15_juv_ju_uba', fecha: 'F15', cat: 'Juveniles', local: 'Juventud Unida', visitante: 'UBA' },
+        { id: 'f15_juv_lan_arg', fecha: 'F15', cat: 'Juveniles', local: 'Lanús', visitante: 'Argentinos Juniors' },
+        { id: 'f15_juv_bal_est', fecha: 'F15', cat: 'Juveniles', local: 'Ballester', visitante: 'Estudiantes' },
+
+        { id: 'f15_jun_riv_fer', fecha: 'F15', cat: 'Juniors', local: 'River', visitante: 'Ferro' },
+        { id: 'f15_jun_ju_uba', fecha: 'F15', cat: 'Juniors', local: 'Juventud Unida', visitante: 'UBA' },
+        { id: 'f15_jun_lan_arg', fecha: 'F15', cat: 'Juniors', local: 'Lanús', visitante: 'Argentinos Juniors' },
+        { id: 'f15_jun_bal_est', fecha: 'F15', cat: 'Juniors', local: 'Ballester', visitante: 'Estudiantes' },
+    ];
+
+    // 1. CARGAR DATOS GUARDADOS AL INICIAR
+    let estadoPartidos = {};
+    const datosGuardados = localStorage.getItem('descenso_damas_2026');
+    if (datosGuardados) {
+        estadoPartidos = JSON.parse(datosGuardados);
+    }
+
+    // 2. GUARDAR DATOS EN EL CELULAR/PC
+    function guardarDatos() {
+        localStorage.setItem('descenso_damas_2026', JSON.stringify(estadoPartidos));
+    }
+
+    // 3. BORRAR TODO
+    window.borrarTodo = function() {
+        if (confirm('¿Estás seguro de que querés borrar todos los resultados?')) {
+            estadoPartidos = {};
+            guardarDatos();
+            renderizarGrilla();
+            actualizarTabla();
+        }
+    };
+
+    function sumarPuntos(equipo, puntos) {
+        if (equipos[equipo]) equipos[equipo].ganados += puntos;
+    }
+
+    function actualizarTabla() {
+        for (let eq in equipos) equipos[eq].ganados = 0;
+
+        for (let id in estadoPartidos) {
+            const partido = partidos.find(p => p.id === id);
+            const res = estadoPartidos[id];
+            if (res === 'G') {
+                sumarPuntos(partido.local, 3); sumarPuntos(partido.visitante, 1);
+            } else if (res === 'E') {
+                sumarPuntos(partido.local, 2); sumarPuntos(partido.visitante, 2);
+            } else if (res === 'P') {
+                sumarPuntos(partido.local, 1); sumarPuntos(partido.visitante, 3);
+            }
+        }
+
+        let resultados = Object.keys(equipos).map(nombre => ({
+            nombre: nombre,
+            base: equipos[nombre].base,
+            fijos: PUNTOS_FIJOS,
+            ganados: equipos[nombre].ganados,
+            total: equipos[nombre].base + PUNTOS_FIJOS + equipos[nombre].ganados
+        }));
+
+        resultados.sort((a, b) => b.total - a.total);
+
+        const tbody = document.getElementById('tabla-posiciones');
+        tbody.innerHTML = '';
+
+        resultados.forEach((eq, index) => {
+            const tr = document.createElement('tr');
+            // Los puestos 4, 5 y 6 (índices 3, 4, 5) van a descenso
+            if (index >= 3) {
+                tr.className = 'descenso';
+            } else {
+                tr.className = 'seguro';
+            }
+
+            tr.innerHTML = `
+                <td>${index + 1}°</td>
+                <td style="text-align: left;">${eq.nombre}</td>
+                <td>${eq.base}</td>
+                <td>+${eq.fijos}</td>
+                <td>+${eq.ganados}</td>
+                <td>${eq.total}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function renderizarGrilla() {
+        const contenedor = document.getElementById('grilla-partidos');
+        contenedor.innerHTML = '';
+
+        let fechaActual = '';
+        let catActual = '';
+
+        partidos.forEach(partido => {
+            if (partido.fecha !== fechaActual) {
+                fechaActual = partido.fecha;
+                const divFecha = document.createElement('div');
+                divFecha.className = 'categoria-title';
+                divFecha.style.background = '#2c3e50';
+                divFecha.style.color = 'white';
+                divFecha.style.marginTop = '20px';
+                divFecha.textContent = `--- ${fechaActual} ---`;
+                contenedor.appendChild(divFecha);
+                catActual = ''; 
+            }
+
+            if (partido.cat !== catActual) {
+                catActual = partido.cat;
+                const divCat = document.createElement('div');
+                divCat.className = 'categoria-title';
+                divCat.textContent = catActual;
+                contenedor.appendChild(divCat);
+            }
+
+            const div = document.createElement('div');
+            div.className = `partido-grilla ${partido.cat.toLowerCase()}`;
+            
+            const esLocalNuestro = equipos[partido.local] ? 'color: #2c3e50;' : 'color: #7f8c8d;';
+            const esVisNuestro = equipos[partido.visitante] ? 'color: #2c3e50;' : 'color: #7f8c8d;';
+
+            const est = estadoPartidos[partido.id];
+            let btnLocalG = 'btn-res', btnLocalE = 'btn-res', btnLocalP = 'btn-res';
+            let btnVisG = 'btn-res', btnVisE = 'btn-res', btnVisP = 'btn-res';
+
+            if (est === 'G') { btnLocalG += ' active-gana'; btnVisP += ' active-pierde'; }
+            if (est === 'E') { btnLocalE += ' active-empata'; btnVisE += ' active-empata'; }
+            if (est === 'P') { btnLocalP += ' active-pierde'; btnVisG += ' active-gana'; }
+
+            div.innerHTML = `
+                <div class="fecha-tag">${partido.fecha}</div>
+                <div class="equipo-local" style="${esLocalNuestro}">${partido.local}</div>
+                <div class="botones-resultado">
+                    <button class="${btnLocalG}" onclick="setResultado('${partido.id}', 'G')">G</button>
+                    <button class="${btnLocalE}" onclick="setResultado('${partido.id}', 'E')">E</button>
+                    <button class="${btnLocalP}" onclick="setResultado('${partido.id}', 'P')">P</button>
+                </div>
+                <div class="equipo-visitante" style="${esVisNuestro}">${partido.visitante}</div>
+            `;
+            contenedor.appendChild(div);
+        });
+    }
+
+    window.setResultado = function(idPartido, resultado) {
+        if (estadoPartidos[idPartido] === resultado) {
+            delete estadoPartidos[idPartido]; // Si hace clic en el mismo, borra la selección
+        } else {
+            estadoPartidos[idPartido] = resultado;
+        }
+        
+        // GUARDAR EN EL CELULAR CADA VEZ QUE SE TOCA UN BOTÓN
+        guardarDatos(); 
+        
+        renderizarGrilla();
+        actualizarTabla();
+    };
+
+    // Iniciar
+    renderizarGrilla();
+    actualizarTabla();
+</script>
+</body>
+</html>

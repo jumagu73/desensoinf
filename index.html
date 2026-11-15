@@ -42,10 +42,9 @@
             position: sticky;
             top: 0;
         }
-        
+
         .posiciones-table th { background-color: #34495e; }
-        
-        /* REGLAS ESTRICTAS PARA EL COLOR ROJO (DESCENSO) */
+
         tr.descenso td {
             background-color: #ffcccc !important;
             color: #cc0000 !important;
@@ -55,7 +54,7 @@
             background-color: #e8f8f5 !important;
             color: #333 !important;
         }
-        
+
         .partido-grilla {
             display: grid;
             grid-template-columns: 60px 1fr 130px 1fr;
@@ -68,7 +67,7 @@
         .partido-grilla.cadetes { border-left: 4px solid #3498db; }
         .partido-grilla.juveniles { border-left: 4px solid #9b59b6; }
         .partido-grilla.juniors { border-left: 4px solid #e67e22; }
-        
+
         .fecha-tag {
             font-size: 0.8em;
             background: #ecf0f1;
@@ -78,7 +77,7 @@
         }
         .equipo-local { text-align: right; font-weight: 500; font-size: 0.9em; }
         .equipo-visitante { text-align: left; font-weight: 500; font-size: 0.9em; }
-        
+
         .botones-resultado {
             display: flex;
             justify-content: center;
@@ -98,7 +97,7 @@
         .btn-res.active-gana { background: #2ecc71; color: white; border-color: #27ae60; }
         .btn-res.active-empata { background: #f1c40f; color: white; border-color: #f39c12; }
         .btn-res.active-pierde { background: #e74c3c; color: white; border-color: #c0392b; }
-        
+
         .categoria-title {
             grid-column: 1 / -1;
             background: #f8f9fa;
@@ -111,7 +110,6 @@
             margin-top: 10px;
         }
 
-        /* Botón para borrar todo */
         .btn-borrar {
             background-color: #e74c3c;
             color: white;
@@ -126,7 +124,6 @@
         }
         .btn-borrar:hover { background-color: #c0392b; }
 
-        /* Adaptación para celulares */
         @media (max-width: 600px) {
             .partido-grilla {
                 grid-template-columns: 1fr;
@@ -148,8 +145,7 @@
 
 <div class="container">
     <h1>Tabla de Descenso - Inferiores Damas 2026</h1>
-    
-    <!-- TABLA DE POSICIONES -->
+
     <div class="card">
         <h2>Posiciones en Tiempo Real</h2>
         <p style="text-align: center; font-size: 0.9em; color: #666;">Los 3 equipos en rojo descienden.</p>
@@ -164,16 +160,12 @@
                     <th>Total</th>
                 </tr>
             </thead>
-            <tbody id="tabla-posiciones">
-                <!-- Se llena con JS -->
-            </tbody>
+            <tbody id="tabla-posiciones"></tbody>
         </table>
-        
-        <!-- Botón para reiniciar todo -->
+
         <button class="btn-borrar" onclick="borrarTodo()">Borrar todos los resultados y reiniciar</button>
     </div>
 
-    <!-- GRILLA DE PARTIDOS -->
     <div class="card">
         <h2>Partidos Pendientes</h2>
         <p style="text-align: center; font-size: 0.9em; color: #666; margin-bottom: 20px;">
@@ -181,14 +173,11 @@
             <strong>G:</strong> 3 pts / <strong>E:</strong> 2 pts / <strong>P:</strong> 1 pt.<br>
             <em>(Hacé clic de nuevo en un botón para desmarcarlo)</em>
         </p>
-        <div id="grilla-partidos">
-            <!-- Se llena con JS -->
-        </div>
+        <div id="grilla-partidos"></div>
     </div>
 </div>
 
 <script>
-    // Datos iniciales
     const equipos = {
         'Ballester': { base: 385, ganados: 0 },
         'UBA': { base: 382, ganados: 0 },
@@ -198,15 +187,11 @@
         'Lanús': { base: 367, ganados: 0 }
     };
 
-    const PUNTOS_FIJOS = 24; // 6 Mini + 9 Inf + 9 Men
+    const PUNTOS_FIJOS = 24;
 
     const partidos = [
-        
         { id: 'f12_juv_vel_ju', fecha: 'F12', cat: 'Juveniles', local: 'Vélez', visitante: 'Juventud Unida' },
 
-        
-        
-       
         { id: 'f15_cad_riv_fer', fecha: 'F15', cat: 'Cadetes', local: 'River', visitante: 'Ferro' },
         { id: 'f15_cad_ju_uba', fecha: 'F15', cat: 'Cadetes', local: 'Juventud Unida', visitante: 'UBA' },
         { id: 'f15_cad_lan_arg', fecha: 'F15', cat: 'Cadetes', local: 'Lanús', visitante: 'Argentinos Juniors' },
@@ -220,22 +205,34 @@
         { id: 'f15_jun_riv_fer', fecha: 'F15', cat: 'Juniors', local: 'River', visitante: 'Ferro' },
         { id: 'f15_jun_ju_uba', fecha: 'F15', cat: 'Juniors', local: 'Juventud Unida', visitante: 'UBA' },
         { id: 'f15_jun_lan_arg', fecha: 'F15', cat: 'Juniors', local: 'Lanús', visitante: 'Argentinos Juniors' },
-        { id: 'f15_jun_bal_est', fecha: 'F15', cat: 'Juniors', local: 'Ballester', visitante: 'Estudiantes' },
+        { id: 'f15_jun_bal_est', fecha: 'F15', cat: 'Juniors', local: 'Ballester', visitante: 'Estudiantes' }
     ];
 
-    // 1. CARGAR DATOS GUARDADOS AL INICIAR
+    // --- CARGA Y VALIDACIÓN DE DATOS GUARDADOS ---
     let estadoPartidos = {};
     const datosGuardados = localStorage.getItem('descenso_damas_2026');
     if (datosGuardados) {
-        estadoPartidos = JSON.parse(datosGuardados);
+        try {
+            const parsed = JSON.parse(datosGuardados);
+            // Validar que sea un objeto y que todas las claves correspondan a partidos existentes
+            if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                const idsValidos = new Set(partidos.map(p => p.id));
+                for (const key in parsed) {
+                    if (idsValidos.has(key) && ['G', 'E', 'P'].includes(parsed[key])) {
+                        estadoPartidos[key] = parsed[key];
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('Datos guardados corruptos, se reinicia.', e);
+            estadoPartidos = {};
+        }
     }
 
-    // 2. GUARDAR DATOS EN EL CELULAR/PC
     function guardarDatos() {
         localStorage.setItem('descenso_damas_2026', JSON.stringify(estadoPartidos));
     }
 
-    // 3. BORRAR TODO
     window.borrarTodo = function() {
         if (confirm('¿Estás seguro de que querés borrar todos los resultados?')) {
             estadoPartidos = {};
@@ -250,20 +247,30 @@
     }
 
     function actualizarTabla() {
+        // Reiniciar puntos ganados
         for (let eq in equipos) equipos[eq].ganados = 0;
 
+        // Recorrer resultados guardados
         for (let id in estadoPartidos) {
             const partido = partidos.find(p => p.id === id);
+            if (!partido) {
+                // Id huérfano: se ignora (no rompe la ejecución)
+                continue;
+            }
             const res = estadoPartidos[id];
             if (res === 'G') {
-                sumarPuntos(partido.local, 3); sumarPuntos(partido.visitante, 1);
+                sumarPuntos(partido.local, 3);
+                sumarPuntos(partido.visitante, 1);
             } else if (res === 'E') {
-                sumarPuntos(partido.local, 2); sumarPuntos(partido.visitante, 2);
+                sumarPuntos(partido.local, 2);
+                sumarPuntos(partido.visitante, 2);
             } else if (res === 'P') {
-                sumarPuntos(partido.local, 1); sumarPuntos(partido.visitante, 3);
+                sumarPuntos(partido.local, 1);
+                sumarPuntos(partido.visitante, 3);
             }
         }
 
+        // Calcular totales
         let resultados = Object.keys(equipos).map(nombre => ({
             nombre: nombre,
             base: equipos[nombre].base,
@@ -274,12 +281,12 @@
 
         resultados.sort((a, b) => b.total - a.total);
 
+        // Renderizar tabla
         const tbody = document.getElementById('tabla-posiciones');
         tbody.innerHTML = '';
 
         resultados.forEach((eq, index) => {
             const tr = document.createElement('tr');
-            // Los puestos 4, 5 y 6 (índices 3, 4, 5) van a descenso
             if (index >= 3) {
                 tr.className = 'descenso';
             } else {
@@ -315,7 +322,7 @@
                 divFecha.style.marginTop = '20px';
                 divFecha.textContent = `--- ${fechaActual} ---`;
                 contenedor.appendChild(divFecha);
-                catActual = ''; 
+                catActual = '';
             }
 
             if (partido.cat !== catActual) {
@@ -328,7 +335,7 @@
 
             const div = document.createElement('div');
             div.className = `partido-grilla ${partido.cat.toLowerCase()}`;
-            
+
             const esLocalNuestro = equipos[partido.local] ? 'color: #2c3e50;' : 'color: #7f8c8d;';
             const esVisNuestro = equipos[partido.visitante] ? 'color: #2c3e50;' : 'color: #7f8c8d;';
 
@@ -356,14 +363,12 @@
 
     window.setResultado = function(idPartido, resultado) {
         if (estadoPartidos[idPartido] === resultado) {
-            delete estadoPartidos[idPartido]; // Si hace clic en el mismo, borra la selección
+            delete estadoPartidos[idPartido];
         } else {
             estadoPartidos[idPartido] = resultado;
         }
-        
-        // GUARDAR EN EL CELULAR CADA VEZ QUE SE TOCA UN BOTÓN
-        guardarDatos(); 
-        
+
+        guardarDatos();
         renderizarGrilla();
         actualizarTabla();
     };

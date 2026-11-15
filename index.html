@@ -42,9 +42,7 @@
             position: sticky;
             top: 0;
         }
-
         .posiciones-table th { background-color: #34495e; }
-
         tr.descenso td {
             background-color: #ffcccc !important;
             color: #cc0000 !important;
@@ -57,10 +55,10 @@
 
         .partido-grilla {
             display: grid;
-            grid-template-columns: 60px 1fr 130px 1fr;
+            grid-template-columns: 60px 1fr;
             align-items: center;
             gap: 10px;
-            padding: 8px;
+            padding: 10px 8px;
             border-bottom: 1px solid #eee;
         }
         .partido-grilla:last-child { border-bottom: none; }
@@ -75,28 +73,55 @@
             border-radius: 4px;
             text-align: center;
         }
-        .equipo-local { text-align: right; font-weight: 500; font-size: 0.9em; }
-        .equipo-visitante { text-align: left; font-weight: 500; font-size: 0.9em; }
 
+        /* Los 3 botones */
         .botones-resultado {
-            display: flex;
-            justify-content: center;
-            gap: 5px;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 8px;
+            align-items: center;
         }
-        .btn-res {
-            padding: 5px 8px;
-            border: 1px solid #bdc3c7;
-            background: white;
-            border-radius: 4px;
+        .btn-equipo, .btn-empate {
+            padding: 10px 12px;
+            border: 2px solid #bdc3c7;
+            background: #fdfdfd;
+            border-radius: 8px;
             cursor: pointer;
-            font-weight: bold;
-            font-size: 0.9em;
+            font-weight: 700;
+            font-size: 0.95em;
             transition: all 0.2s;
+            color: #2c3e50;
+            font-family: inherit;
         }
-        .btn-res:hover { background: #ecf0f1; }
-        .btn-res.active-gana { background: #2ecc71; color: white; border-color: #27ae60; }
-        .btn-res.active-empata { background: #f1c40f; color: white; border-color: #f39c12; }
-        .btn-res.active-pierde { background: #e74c3c; color: white; border-color: #c0392b; }
+        .btn-equipo:hover, .btn-empate:hover {
+            background: #ecf0f1;
+            border-color: #95a5a6;
+        }
+        .btn-equipo.local { text-align: right; }
+        .btn-equipo.visitante { text-align: left; }
+        .btn-empate { color: #7f8c8d; min-width: 90px; }
+
+        .btn-equipo.active-gana {
+            background: #2ecc71;
+            color: white;
+            border-color: #27ae60;
+        }
+        .btn-equipo.active-pierde {
+            background: #e74c3c;
+            color: white;
+            border-color: #c0392b;
+        }
+        .btn-empate.active-empata {
+            background: #f1c40f;
+            color: white;
+            border-color: #f39c12;
+        }
+
+        .btn-equipo.no-tabla {
+            color: #95a5a6;
+            font-weight: 500;
+            font-style: italic;
+        }
 
         .categoria-title {
             grid-column: 1 / -1;
@@ -134,8 +159,11 @@
                 margin-bottom: 5px;
                 border: 1px solid #eee;
             }
-            .equipo-local, .equipo-visitante { text-align: center; }
-            .botones-resultado { margin: 5px 0; }
+            .botones-resultado {
+                grid-template-columns: 1fr;
+                gap: 4px;
+            }
+            .btn-equipo.local, .btn-equipo.visitante { text-align: center; }
             table { font-size: 0.8em; }
             th, td { padding: 5px; }
         }
@@ -162,16 +190,15 @@
             </thead>
             <tbody id="tabla-posiciones"></tbody>
         </table>
-
         <button class="btn-borrar" onclick="borrarTodo()">Borrar todos los resultados y reiniciar</button>
     </div>
 
     <div class="card">
         <h2>Partidos Pendientes</h2>
         <p style="text-align: center; font-size: 0.9em; color: #666; margin-bottom: 20px;">
-            Asigná el resultado. <br>
-            <strong>G:</strong> 3 pts / <strong>E:</strong> 2 pts / <strong>P:</strong> 1 pt.<br>
-            <em>(Hacé clic de nuevo en un botón para desmarcarlo)</em>
+            Tocá el nombre del equipo que ganó, o "Empate".<br>
+            <strong>Ganador:</strong> 3 pts &nbsp;|&nbsp; <strong>Perdedor:</strong> 1 pt &nbsp;|&nbsp; <strong>Empate:</strong> 2 pts c/u.<br>
+            <em>(Tocá de nuevo el mismo botón para desmarcarlo)</em>
         </p>
         <div id="grilla-partidos"></div>
     </div>
@@ -208,13 +235,11 @@
         { id: 'f15_jun_bal_est', fecha: 'F15', cat: 'Juniors', local: 'Ballester', visitante: 'Estudiantes' }
     ];
 
-    // --- CARGA Y VALIDACIÓN DE DATOS GUARDADOS ---
     let estadoPartidos = {};
     const datosGuardados = localStorage.getItem('descenso_damas_2026');
     if (datosGuardados) {
         try {
             const parsed = JSON.parse(datosGuardados);
-            // Validar que sea un objeto y que todas las claves correspondan a partidos existentes
             if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
                 const idsValidos = new Set(partidos.map(p => p.id));
                 for (const key in parsed) {
@@ -247,16 +272,12 @@
     }
 
     function actualizarTabla() {
-        // Reiniciar puntos ganados
         for (let eq in equipos) equipos[eq].ganados = 0;
 
-        // Recorrer resultados guardados
         for (let id in estadoPartidos) {
             const partido = partidos.find(p => p.id === id);
-            if (!partido) {
-                // Id huérfano: se ignora (no rompe la ejecución)
-                continue;
-            }
+            if (!partido) continue;
+
             const res = estadoPartidos[id];
             if (res === 'G') {
                 sumarPuntos(partido.local, 3);
@@ -270,7 +291,6 @@
             }
         }
 
-        // Calcular totales
         let resultados = Object.keys(equipos).map(nombre => ({
             nombre: nombre,
             base: equipos[nombre].base,
@@ -281,18 +301,12 @@
 
         resultados.sort((a, b) => b.total - a.total);
 
-        // Renderizar tabla
         const tbody = document.getElementById('tabla-posiciones');
         tbody.innerHTML = '';
 
         resultados.forEach((eq, index) => {
             const tr = document.createElement('tr');
-            if (index >= 3) {
-                tr.className = 'descenso';
-            } else {
-                tr.className = 'seguro';
-            }
-
+            tr.className = (index >= 3) ? 'descenso' : 'seguro';
             tr.innerHTML = `
                 <td>${index + 1}°</td>
                 <td style="text-align: left;">${eq.nombre}</td>
@@ -336,29 +350,32 @@
             const div = document.createElement('div');
             div.className = `partido-grilla ${partido.cat.toLowerCase()}`;
 
-            const esLocalNuestro = equipos[partido.local] ? 'color: #2c3e50;' : 'color: #7f8c8d;';
-            const esVisNuestro = equipos[partido.visitante] ? 'color: #2c3e50;' : 'color: #7f8c8d;';
-
             const est = estadoPartidos[partido.id];
-            let btnLocalG = 'btn-res', btnLocalE = 'btn-res', btnLocalP = 'btn-res';
-            let btnVisG = 'btn-res', btnVisE = 'btn-res', btnVisP = 'btn-res';
 
-            if (est === 'G') { btnLocalG += ' active-gana'; btnVisP += ' active-pierde'; }
-            if (est === 'E') { btnLocalE += ' active-empata'; btnVisE += ' active-empata'; }
-            if (est === 'P') { btnLocalP += ' active-pierde'; btnVisG += ' active-gana'; }
+            let clsLocal = 'btn-equipo local';
+            let clsEmpate = 'btn-empate';
+            let clsVis = 'btn-equipo visitante';
+
+            if (!equipos[partido.local]) clsLocal += ' no-tabla';
+            if (!equipos[partido.visitante]) clsVis += ' no-tabla';
+
+            if (est === 'G') { clsLocal += ' active-gana'; clsVis += ' active-pierde'; }
+            if (est === 'E') { clsEmpate += ' active-empata'; }
+            if (est === 'P') { clsLocal += ' active-pierde'; clsVis += ' active-gana'; }
 
             div.innerHTML = `
                 <div class="fecha-tag">${partido.fecha}</div>
-                <div class="equipo-local" style="${esLocalNuestro}">${partido.local}</div>
                 <div class="botones-resultado">
-                    <button class="${btnLocalG}" onclick="setResultado('${partido.id}', 'G')">G</button>
-                    <button class="${btnLocalE}" onclick="setResultado('${partido.id}', 'E')">E</button>
-                    <button class="${btnLocalP}" onclick="setResultado('${partido.id}', 'P')">P</button>
+                    <button class="${clsLocal}" onclick="setResultado('${partido.id}', 'G')">${partido.local}</button>
+                    <button class="${clsEmpate}" onclick="setResultado('${partido.id}', 'E')">Empate</button>
+                    <button class="${clsVis}" onclick="setResultado('${partido.id}', 'P')">${partido.visitante}</button>
                 </div>
-                <div class="equipo-visitante" style="${esVisNuestro}">${partido.visitante}</div>
             `;
             contenedor.appendChild(div);
         });
+
+        // Confirmación en consola para verificar que se renderizó bien
+        console.log('Grilla renderizada. Botones generados con nombres de equipos.');
     }
 
     window.setResultado = function(idPartido, resultado) {
@@ -367,13 +384,11 @@
         } else {
             estadoPartidos[idPartido] = resultado;
         }
-
         guardarDatos();
         renderizarGrilla();
         actualizarTabla();
     };
 
-    // Iniciar
     renderizarGrilla();
     actualizarTabla();
 </script>
